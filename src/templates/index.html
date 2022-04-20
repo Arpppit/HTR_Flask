@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HomePage</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/jumbotron.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/form.css') }}">
+</head>
+</head>
+<body style="background-color:transparent">
+
+<div class="container-fluid" style="background-image:url({{url_for('static',filename='img/img.jpg')}}); ">
+  
+    <div class="header clearfix">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" class="active"><a href="#">Home</a></li>
+            <li role="presentation"><a href="#">About</a></li>
+            <li role="presentation"><a href="#">Contact</a></li>
+          </ul>
+        </nav>
+        <h3 class="text-muted">HTR </h3>
+    </div>
+    <div class="jumbotron">
+        <h1>Handwritten Text Recognition</h1>
+        <p class="lead">Input the Handwritten Text here as file upload and convert into digital text.
+                        Click check demo to get started. Upload your file and get your results.</p>
+                
+
+    </div>
+    <form id="regForm" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" style="background-color:transparent">
+
+     
+        
+        <!-- One "tab" for each step in the form: -->
+        <div class="tab" style="align-items: center;margin-left:42%;display:flex">
+            <p><a class="btn btn-lg btn-success" onclick="nextPrev(1)" role="button">Check Demo Here!</a></p>
+
+        </div>
+        
+        <div class="tab">Upload valid line file here:
+            
+                <label for="file-picker">File Input</label><br>
+                <input id="file-picker" type="file" name="file" accept="image/*" multiple>
+                <p class="help-block">Supported Image are '.png', 'jpg'</p>
+                <div id="msg" style="color: blue;font-size: 20px"></div>
+                <button type="button" id="prevBtn" class="btn btn-primary" onclick="nextPrev(-1)">Previous</button>
+                <button  value="Upload" id="upload-button" class="btn btn-primary" onclick="nextPrev(1)" >Submit</button>
+           
+        </div>
+        
+        <div class="tab">
+            <div class="loading-container">
+                <div class="item"></div>
+                <div class="item"></div>
+                <div class="item"></div>
+                <div class="item"></div>
+              </div>
+        </div>
+        
+        <div class="tab">Login Info:
+            <img src="{{url_for('static', filename=image_name)}} " class="figure-img img-fluid rounded" alt="Upload Image.">
+          <figcaption class="figure-caption">Upload Recently Photo.</figcaption>
+          <p class="bg-success">
+            <b>Recognized Text</b><br>
+        </p>
+        <textarea class="form-control" id="textPred"></textarea>
+        <h1>{{session.result}}</h1>
+        </div>
+        
+        <div style="overflow:auto;">
+          <div style="float:right;">
+            <button type="button" id="prevBtn" onclick="nextPrev(-1)" style="visibility: hidden;">Previous</button>
+            <button type="button" id="nextBtn" onclick="nextPrev(1)" style = "visibility: hidden;">Next</button>
+          </div>
+        </div>
+        
+        <!-- Circles which indicates the steps of the form: -->
+        <div style="text-align:center;margin-top:40px;">
+          <span class="step"></span>
+          <span class="step"></span>
+          <span class="step"></span>
+          <span class="step"></span>
+        </div>
+        
+        </form> 
+</div>
+
+<footer>
+    <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+</footer>
+</body>
+<script>
+    var currentTab = 0; // Current tab is set to be the first tab (0)
+showTab(currentTab); // Display the current tab
+
+function showTab(n) {
+  // This function will display the specified tab of the form ...
+  var x = document.getElementsByClassName("tab");
+  x[n].style.display = "block";
+  // ... and fix the Previous/Next buttons:
+  if (n == 0) {
+    document.getElementById("prevBtn").style.display = "none";
+  } else {
+    document.getElementById("prevBtn").style.display = "inline";
+  }
+  if (n == (x.length - 1)) {
+    document.getElementById("nextBtn").innerHTML = "Submit";
+  } else {
+    document.getElementById("nextBtn").innerHTML = "Next";
+  }
+  // ... and run a function that displays the correct step indicator:
+  fixStepIndicator(n)
+}
+
+const doupload =async() => {
+    let data = document.getElementById("file-picker").files[0];
+    let entry = document.getElementById("file-picker").files[0];
+    console.log('doupload',entry,data)
+   await fetch('uploads/' + encodeURIComponent(entry.name), {method:'POST',body:data}).then((response) => console.log('res',response))
+//Then with the data from the response in JSON...
+    //nextPrev(1)
+    
+    //alert('your file has been uploaded');
+    //location.reload();
+};
+
+
+const  nextPrev = async(n) => {
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+  // This function will figure out which tab to display
+  var x = document.getElementsByClassName("tab");
+  // Exit the function if any field in the current tab is invalid:
+  if (n == 1 && !validateForm()) return false;
+  // Hide the current tab:
+  x[currentTab].style.display = "none";
+  // Increase or decrease the current tab by 1:
+  currentTab = currentTab + n;
+  if(currentTab === 2){
+      
+      if(n===-1){
+          currentTab +=n
+      }
+      else{
+      showTab(currentTab)
+      await doupload()
+    // await  doupload()
+      await delay(3000)
+      x[currentTab].style.display = "none";
+      currentTab +=n}
+  }
+  console.log(currentTab)
+ 
+  // if you have reached the end of the form... :
+  if (currentTab >= x.length) {
+    //...the form gets submitted:
+    document.getElementById("regForm").submit();
+    return false;
+  }
+  // Otherwise, display the correct tab:
+  showTab(currentTab);
+}
+
+function validateForm() {
+  // This function deals with validation of the form fields
+  var x, y, i, valid = true;
+  x = document.getElementsByClassName("tab");
+  y = x[currentTab].getElementsByTagName("input");
+  // A loop that checks every input field in the current tab:
+  for (i = 0; i < y.length; i++) {
+    // If a field is empty...
+    if (y[i].value == "") {
+      // add an "invalid" class to the field:
+      y[i].className += " invalid";
+      // and set the current valid status to false:
+      valid = false;
+    }
+  }
+  // If the valid status is true, mark the step as finished and valid:
+  if (valid) {
+    document.getElementsByClassName("step")[currentTab].className += " finish";
+  }
+  return valid; // return the valid status
+}
+
+function fixStepIndicator(n) {
+  // This function removes the "active" class of all steps...
+  var i, x = document.getElementsByClassName("step");
+  for (i = 0; i < x.length; i++) {
+    x[i].className = x[i].className.replace(" active", "");
+  }
+  //... and adds the "active" class to the current step:
+  x[n].className += " active";
+}
+
+$("#file-picker").change(function(){
+        var input = document.getElementById('file-picker');
+        for (var i=0; i<input.files.length; i++)
+        {
+        //koala.jpg, koala.JPG substring(index) lastIndexOf('a') koala.1.jpg
+            var ext= input.files[i].name.substring(input.files[i].name.lastIndexOf('.')+1).toLowerCase()
+            if ((ext == 'jpg') || (ext == 'png'))
+            {
+                $("#outer #msg").text("Files are supported")
+            }
+            else
+            {
+                $("#outer #msg").text("Files are NOT supported")
+                document.getElementById("file-picker").value ="";
+            }
+        }
+    } );
+function final_res() {
+    document.getElementById("textPred").value = "{{session.result}}"
+}
+</script>
+
+
+
+
+<script src="{{url_for('static', filename='js/jquery.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+</html>
